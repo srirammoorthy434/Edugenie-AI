@@ -3,6 +3,13 @@ from config import MAX_INPUT_CHARS
 
 
 def generate_learning_path(topic: str) -> str:
+    """
+    Generate a personalized learning path using Gemini.
+
+    If Gemini is temporarily unavailable because of quota,
+    rate limits, or service availability, ai_client.py
+    automatically provides the learning-path fallback.
+    """
 
     topic = topic.strip()
 
@@ -43,5 +50,7 @@ Use headings and bullet points.
         system_instruction=(
             "You are EduGenie, a personalized educational "
             "learning-path advisor."
-        )
+        ),
+        task="learning_path",
+        user_input=topic
     )
