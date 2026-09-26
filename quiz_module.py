@@ -83,6 +83,10 @@ Requirements:
         )
     )
 
+    # Show the actual AI error instead of hiding it
+    if "error" in result:
+        raise RuntimeError(result["error"])
+
     questions = result.get("questions")
 
     if not isinstance(questions, list):
