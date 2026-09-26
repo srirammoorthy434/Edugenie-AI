@@ -3,6 +3,13 @@ from config import MAX_INPUT_CHARS
 
 
 def summarize_text(text: str) -> str:
+    """
+    Summarize educational text using Gemini.
+
+    If Gemini is temporarily unavailable because of quota,
+    rate limits, or service availability, ai_client.py
+    automatically provides the summary fallback.
+    """
 
     text = text.strip()
 
@@ -35,5 +42,7 @@ Text:
         prompt=prompt,
         system_instruction=(
             "You are EduGenie, an educational summarization assistant."
-        )
+        ),
+        task="summary",
+        user_input=text
     )
