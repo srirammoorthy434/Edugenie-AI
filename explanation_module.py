@@ -32,6 +32,13 @@ def _load_local_model():
 
 
 def explain_topic(topic: str) -> str:
+    """
+    Explain an educational topic using Gemini.
+
+    If Gemini is temporarily unavailable because of quota,
+    rate limits, or service availability, ai_client.py
+    automatically provides the explanation fallback.
+    """
 
     topic = topic.strip()
 
@@ -57,10 +64,11 @@ Use this structure:
 4. Simple example
 5. Important points to remember
 
-Use simple language.
+Use simple language and make the explanation easy for a beginner.
 """
 
-    # Optional local model.
+    # Optional local explanation model.
+    # This is used only when LOCAL_EXPLAINER_ENABLED is true.
     if LOCAL_EXPLAINER_ENABLED:
 
         try:
@@ -76,7 +84,8 @@ Use simple language.
                 return result[0]["generated_text"]
 
         except Exception:
-            # If local model fails, use Gemini instead.
+            # If the optional local model fails,
+            # continue to the Gemini/fallback system.
             pass
 
     return generate_text(
@@ -84,5 +93,7 @@ Use simple language.
         system_instruction=(
             "You are EduGenie, an expert educational tutor. "
             "Explain concepts simply and accurately."
-        )
+        ),
+        task="explain",
+        user_input=topic
     )
