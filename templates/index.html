@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>EduGenie - AI Learning Assistant</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='style.css') }}"
+    >
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <header class="hero">
+
+            <div class="logo">
+                🎓
+            </div>
+
+            <h1>EduGenie</h1>
+
+            <p>
+                Google Gemini Powered Learning Assistant
+            </p>
+
+            <span class="subtitle">
+                Learn smarter. Understand faster.
+            </span>
+
+        </header>
+
+
+        <main class="card">
+
+            <div class="form-group">
+
+                <label for="task">
+                    Choose a task
+                </label>
+
+                <select id="task">
+
+                    <option value="explain">
+                        Explain
+                    </option>
+
+                    <option value="qa">
+                        Q&amp;A
+                    </option>
+
+                    <option value="quiz">
+                        Generate Quiz
+                    </option>
+
+                    <option value="summarize">
+                        Summarize
+                    </option>
+
+                    <option value="recommend">
+                        Recommend Learning Path
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label id="input-label" for="user-input">
+                    Enter a topic
+                </label>
+
+                <textarea
+                    id="user-input"
+                    rows="8"
+                    placeholder="Example: Pythagoras theorem"
+                ></textarea>
+
+            </div>
+
+
+            <div class="buttons">
+
+                <button
+                    id="generate-btn"
+                    class="primary-btn"
+                >
+                    ✨ Generate
+                </button>
+
+                <button
+                    id="clear-btn"
+                    class="secondary-btn"
+                >
+                    Clear
+                </button>
+
+            </div>
+
+
+            <div
+                id="loading"
+                class="loading hidden"
+            >
+                <div class="spinner"></div>
+
+                <p>
+                    EduGenie is thinking...
+                </p>
+            </div>
+
+
+            <section
+                id="result-section"
+                class="result-section hidden"
+            >
+
+                <h2>
+                    Result
+                </h2>
+
+                <div id="result"></div>
+
+            </section>
+
+        </main>
+
+
+        <footer>
+
+            <p>
+                EduGenie • AI-powered educational assistant
+            </p>
+
+        </footer>
+
+    </div>
+
+
+<script>
+
+const task = document.getElementById("task");
+const input = document.getElementById("user-input");
+const inputLabel = document.getElementById("input-label");
+
+const generateButton =
+    document.getElementById("generate-btn");
+
+const clearButton =
+    document.getElementById("clear-btn");
+
+const loading =
+    document.getElementById("loading");
+
+const resultSection =
+    document.getElementById("result-section");
+
+const result =
+    document.getElementById("result");
+
+
+task.addEventListener("change", updateInput);
+
+
+function updateInput() {
+
+    const selected = task.value;
+
+    if (selected === "qa") {
+
+        inputLabel.textContent =
+            "Ask your question";
+
+        input.placeholder =
+            "Example: Which is the largest ocean?";
+
+    }
+
+    else if (selected === "quiz") {
+
+        inputLabel.textContent =
+            "Enter quiz topic";
+
+        input.placeholder =
+            "Example: Pythagoras theorem";
+
+    }
+
+    else if (selected === "summarize") {
+
+        inputLabel.textContent =
+            "Enter text to summarize";
+
+        input.placeholder =
+            "Paste your educational text here...";
+
+    }
+
+    else if (selected === "recommend") {
+
+        inputLabel.textContent =
+            "Enter learning topic";
+
+        input.placeholder =
+            "Example: SQL";
+
+    }
+
+    else {
+
+        inputLabel.textContent =
+            "Enter a topic to explain";
+
+        input.placeholder =
+            "Example: Photosynthesis";
+
+    }
+}
+
+
+generateButton.addEventListener(
+    "click",
+    generateResult
+);
+
+
+clearButton.addEventListener(
+    "click",
+    clearAll
+);
+
+
+async function generateResult() {
+
+    const value = input.value.trim();
+
+    if (!value) {
+
+        showError(
+            "Please enter something first."
+        );
+
+        return;
+    }
+
+
+    setLoading(true);
+
+
+    try {
+
+        let endpoint;
+        let body;
+
+
+        if (task.value === "qa") {
+
+            endpoint = "/qa";
+
+            body = {
+                question: value
+            };
+
+        }
+
+
+        else if (task.value === "explain") {
+
+            endpoint = "/explain";
+
+            body = {
+                topic: value
+            };
+
+        }
+
+
+        else if (task.value === "quiz") {
+
+            endpoint = "/quiz";
+
+            body = {
+                topic: value
+            };
+
+        }
+
+
+        else if (task.value === "summarize") {
+
+            endpoint = "/summarize";
+
+            body = {
+                text: value
+            };
+
+        }
+
+
+        else if (task.value === "recommend") {
+
+            endpoint =
+                "/learn/recommendations";
+
+            body = {
+                topic: value
+            };
+
+        }
+
+
+        const response = await fetch(
+            endpoint,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify(body)
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            showError(
+                data.error ||
+                "Something went wrong."
+            );
+
+            return;
+        }
+
+
+        renderResult(data);
+
+    }
+
+
+    catch (error) {
+
+        showError(
+            "Could not connect to the server. " +
+            "Make sure FastAPI is running."
+        );
+
+    }
+
+
+    finally {
+
+        setLoading(false);
+
+    }
+}
+
+
+function renderResult(data) {
+
+    result.innerHTML = "";
+
+
+    if (data.answer) {
+
+        result.innerHTML =
+            formatText(data.answer);
+
+    }
+
+
+    else if (data.explanation) {
+
+        result.innerHTML =
+            formatText(data.explanation);
+
+    }
+
+
+    else if (data.summary) {
+
+        result.innerHTML =
+            formatText(data.summary);
+
+    }
+
+
+    else if (data.recommendations) {
+
+        result.innerHTML =
+            formatText(data.recommendations);
+
+    }
+
+
+    else if (data.quiz) {
+
+        renderQuiz(data.quiz);
+
+    }
+
+
+    resultSection.classList.remove(
+        "hidden"
+    );
+
+
+    resultSection.scrollIntoView({
+        behavior: "smooth"
+    });
+}
+
+
+function renderQuiz(quiz) {
+
+    const questions =
+        quiz.questions || [];
+
+
+    questions.forEach(
+        (question, index) => {
+
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className =
+                "quiz-question";
+
+
+            const title =
+                document.createElement("h3");
+
+            title.textContent =
+                `${index + 1}. ${question.question}`;
+
+
+            wrapper.appendChild(title);
+
+
+            const options =
+                document.createElement("ol");
+
+            options.type = "A";
+
+
+            question.options.forEach(
+                option => {
+
+                    const li =
+                        document.createElement("li");
+
+                    li.textContent =
+                        option;
+
+                    options.appendChild(li);
+
+                }
+            );
+
+
+            wrapper.appendChild(options);
+
+
+            const answer =
+                document.createElement("p");
+
+            answer.className =
+                "correct-answer";
+
+            answer.innerHTML =
+                "<strong>Answer:</strong> " +
+                escapeHtml(
+                    question.correct_answer
+                );
+
+
+            wrapper.appendChild(answer);
+
+
+            const explanation =
+                document.createElement("p");
+
+            explanation.innerHTML =
+                "<strong>Explanation:</strong> " +
+                escapeHtml(
+                    question.explanation
+                );
+
+
+            wrapper.appendChild(
+                explanation
+            );
+
+
+            result.appendChild(
+                wrapper
+            );
+
+        }
+    );
+}
+
+
+function formatText(text) {
+
+    return escapeHtml(text)
+        .replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        )
+        .replace(
+            /^### (.*)$/gm,
+            "<h3>$1</h3>"
+        )
+        .replace(
+            /^## (.*)$/gm,
+            "<h2>$1</h2>"
+        )
+        .replace(
+            /^# (.*)$/gm,
+            "<h1>$1</h1>"
+        )
+        .replace(
+            /^[-*] (.*)$/gm,
+            "<li>$1</li>"
+        )
+        .replace(
+            /\n/g,
+            "<br>"
+        );
+
+}
+
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+function showError(message) {
+
+    result.innerHTML =
+        `<div class="error">
+            ${escapeHtml(message)}
+        </div>`;
+
+    resultSection.classList.remove(
+        "hidden"
+    );
+}
+
+
+function setLoading(isLoading) {
+
+    if (isLoading) {
+
+        loading.classList.remove(
+            "hidden"
+        );
+
+        generateButton.disabled =
+            true;
+
+    }
+
+    else {
+
+        loading.classList.add(
+            "hidden"
+        );
+
+        generateButton.disabled =
+            false;
+
+    }
+}
+
+
+function clearAll() {
+
+    input.value = "";
+
+    result.innerHTML = "";
+
+    resultSection.classList.add(
+        "hidden"
+    );
+}
+
+
+updateInput();
+
+</script>
+
+</body>
+
+</html>
